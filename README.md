@@ -13,6 +13,7 @@ A collection of helpful scripts and automation tools for embedded systems develo
 | | [`setup_zephyr.bat`](./ZephyrSetup/setup_zephyr.bat) | Windows 10 / 11 | `v1.0.0` | Native Windows Batch script to set up a Zephyr RTOS workspace & matching SDK. |
 |[**`SetWinDriverTestMode/`**](./SetWinDriverTestMode/) | [`SetDriverTestMode.bat`](./SetWinDriverTestMode/SetDriverTestMode.bat) | Windows 10 / 11 | `v1.0.0` | Windows driver test-signing mode utility |
 |[**`WindowsSystemAudit/`**](./WindowsSystemAudit/) | [`WindowsSystemAudit.bat`](./WindowsSystemAudit/WindowsSystemAudit.bat) | Windows 10 / 11 | `v1.0.0` | Creates a log, separate registry exports, and driver lists. |
+|[**`BinHexConverter/`**](./BinHexConverter/) | [`bin_hex_converter.py`](./BinHexConverter/bin_hex_converter.py) | Windows, Linux, macOS | `v1.0.0` | Zero-dependency Python tool to convert firmware `.bin` files to Intel `.hex` (or raw hex) and vice versa. |
 
 ### 📄 License
 
