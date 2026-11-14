@@ -24,7 +24,7 @@ echo "=================================================="
 echo ""
 
 # 1. Prompt for the desired Zephyr release
-read -p "Which Zephyr release do you want to install? (e.g. v3.7.0, v4.0.0, or 'main'): " ZEPHYR_REF
+read -r -p "Which Zephyr release do you want to install? (e.g. v3.7.0, v4.0.0, or 'main'): " ZEPHYR_REF
 
 if [ -z "$ZEPHYR_REF" ]; then
     echo "Error: No release specified. Aborting."
@@ -54,6 +54,7 @@ cd "$BASE_DIR"
 echo ""
 echo "[3/6] Creating Python virtual environment and installing 'west'..."
 python3 -m venv "$VENV_DIR"
+# shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 pip install --upgrade pip
 pip install west
@@ -82,7 +83,7 @@ SDK_VERSION_FILE="$WORKSPACE_DIR/zephyr/SDK_VERSION"
 
 if [ -f "$SDK_VERSION_FILE" ]; then
     # Read version number and strip whitespace
-    SDK_VERSION=$(cat "$SDK_VERSION_FILE" | tr -d '[:space:]')
+    SDK_VERSION=$(tr -d '[:space:]' < "$SDK_VERSION_FILE")
     echo "Required SDK version according to Zephyr repository: $SDK_VERSION"
 else
     echo "Error: SDK_VERSION file not found at $SDK_VERSION_FILE"

@@ -12,7 +12,7 @@ Note: Zero-dependency utility to convert raw firmware binaries (.bin) to
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 
 def compute_ihex_checksum(record_bytes: bytes) -> int:
@@ -167,7 +167,10 @@ def ihex_to_bin(
             raise ValueError(f"Line {line_num}: Unsupported record type 0x{record_type:02X}.")
 
     if not eof_seen:
-        print("Warning: Intel HEX file is missing an End-Of-File (:00000001FF) record.", file=sys.stderr)
+        print(
+            "Warning: Intel HEX file is missing an End-Of-File (:00000001FF) record.",
+            file=sys.stderr,
+        )
 
     if not chunks:
         return b"", 0, 0, start_linear_addr
@@ -286,7 +289,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--base-address",
         type=parse_int,
         default=0x00000000,
-        help="Base/start address for bin2hex in Intel HEX mode (default: 0x00000000, e.g. 0x08000000).",
+        help="Base/start address for bin2hex in IHEX mode (default: 0x00000000, e.g. 0x08000000).",
     )
     parser.add_argument(
         "-c",
