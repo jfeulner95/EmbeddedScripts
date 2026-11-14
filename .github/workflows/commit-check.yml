@@ -1,0 +1,63 @@
+name: Commit Message Check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-check:
+    name: Commit Convention & DCO Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate Commit Messages & Signed-off-by (DCO)
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_SHA" ] && [ -n "$HEAD_SHA" ]; then
+            COMMITS=$(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA")
+          else
+            COMMITS=$(git rev-list --no-merges -n 1 HEAD)
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            echo "No non-merge commits to check."
+            exit 0
+          fi
+
+          HEADER_REGEX='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|repository)(\([a-zA-Z0-9_.-]+\))?: .+'
+          DCO_REGEX='^Signed-off-by: .+ <.+@.+>$'
+          FAILED=0
+
+          for sha in $COMMITS; do
+            subject=$(git log -1 --format="%s" "$sha")
+            body=$(git log -1 --format="%B" "$sha")
+            echo "Checking commit $sha: $subject"
+
+            if ! [[ "$subject" =~ $HEADER_REGEX ]]; then
+              echo "::error::Commit $sha subject does not match '<type>(<scope>): <description>': $subject"
+              FAILED=1
+            fi
+
+            if ! echo "$body" | grep -Eq "$DCO_REGEX"; then
+              echo "::error::Commit $sha is missing a valid 'Signed-off-by: Name <email>' line."
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All checked commits follow the repository convention and include Signed-off-by!"
