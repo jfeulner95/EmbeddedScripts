@@ -1,0 +1,126 @@
+name: Script & Functional Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-scripts:
+    name: Test Scripts (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Python syntax (py_compile)
+        shell: bash
+        run: |
+          mapfile -t py_files < <(git ls-files '*.py')
+          for f in "${py_files[@]}"; do
+            echo "Compiling $f..."
+            python -m py_compile "$f"
+          done
+
+      - name: Verify Bash syntax (bash -n)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mapfile -t sh_files < <(git ls-files '*.sh')
+          for f in "${sh_files[@]}"; do
+            echo "Checking syntax of $f..."
+            bash -n "$f"
+          done
+
+      - name: Test BinHexConverter CLI & Round-Trip Conversion
+        shell: bash
+        run: |
+          python BinHexConverter/bin_hex_converter.py --help > /dev/null
+
+          python - << 'EOF'
+          import subprocess
+          import sys
+          import tempfile
+          from pathlib import Path
+
+          script = Path("BinHexConverter/bin_hex_converter.py").resolve()
+
+          with tempfile.TemporaryDirectory() as tmp:
+              tmp_dir = Path(tmp)
+
+              # 1. Create a 70 KB test firmware binary (crosses 64 KB boundary for record 04)
+              original_bin = tmp_dir / "firmware.bin"
+              payload = bytes((i * 73 + 19) & 0xFF for i in range(70 * 1024))
+              original_bin.write_bytes(payload)
+
+              # 2. Convert .bin -> Intel .hex with STM32 base address 0x08000000
+              ihex_file = tmp_dir / "firmware.hex"
+              subprocess.run(
+                  [
+                      sys.executable,
+                      str(script),
+                      str(original_bin),
+                      str(ihex_file),
+                      "--base-address",
+                      "0x08000000",
+                      "--byte-count",
+                      "32",
+                  ],
+                  check=True,
+              )
+
+              # 3. Convert Intel .hex -> .bin and compare byte-for-byte
+              restored_bin = tmp_dir / "restored.bin"
+              subprocess.run(
+                  [sys.executable, str(script), str(ihex_file), str(restored_bin)],
+                  check=True,
+              )
+              assert restored_bin.read_bytes() == payload, "IHEX round-trip mismatch!"
+
+              # 4. Convert .bin -> Raw ASCII Hex -> .bin and compare byte-for-byte
+              raw_hex_file = tmp_dir / "raw_dump.txt"
+              restored_raw_bin = tmp_dir / "restored_raw.bin"
+              subprocess.run(
+                  [
+                      sys.executable,
+                      str(script),
+                      str(original_bin),
+                      str(raw_hex_file),
+                      "--mode",
+                      "bin2hex",
+                      "--format",
+                      "raw",
+                  ],
+                  check=True,
+              )
+              subprocess.run(
+                  [
+                      sys.executable,
+                      str(script),
+                      str(raw_hex_file),
+                      str(restored_raw_bin),
+                      "--mode",
+                      "hex2bin",
+                      "--format",
+                      "raw",
+                  ],
+                  check=True,
+              )
+              assert restored_raw_bin.read_bytes() == payload, "Raw hex round-trip mismatch!"
+
+              print("All BinHexConverter round-trip tests passed successfully!")
+          EOF

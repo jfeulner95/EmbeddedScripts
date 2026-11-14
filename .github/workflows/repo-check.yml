@@ -1,0 +1,64 @@
+name: Repository Structure & Docs Check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repo-check:
+    name: Verify Tool Folders & Markdown Links
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check tool folders and Markdown links
+        shell: bash
+        run: |
+          python3 - << 'EOF'
+          import re
+          import sys
+          from pathlib import Path
+
+          root = Path(".").resolve()
+          errors = []
+
+          # 1. Verify every top-level tool folder has a README.md and LICENSE
+          for entry in sorted(root.iterdir()):
+              if entry.is_dir() and not entry.name.startswith("."):
+                  if not (entry / "README.md").is_file():
+                      errors.append(f"Missing README.md in tool folder '{entry.name}/'")
+                  if not (entry / "LICENSE").is_file():
+                      errors.append(f"Missing LICENSE in tool folder '{entry.name}/'")
+
+          # 2. Verify all relative file/folder links in Markdown files exist
+          link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+          for md_file in sorted(root.rglob("*.md")):
+              if ".git" in md_file.parts:
+                  continue
+              content = md_file.read_text(encoding="utf-8", errors="replace")
+              for match in link_pattern.finditer(content):
+                  target = match.group(1).strip()
+                  # Skip external URLs, mailto, and pure anchor links
+                  if target.startswith(("http://", "https://", "mailto:", "#")):
+                      continue
+                  path_part = target.split("#", 1)[0]
+                  if not path_part:
+                      continue
+                  resolved = (md_file.parent / path_part).resolve()
+                  if not resolved.exists():
+                      rel_md = md_file.relative_to(root)
+                      errors.append(f"Broken link in '{rel_md}': '{target}' does not exist")
+
+          if errors:
+              for err in errors:
+                  print(f"Error: {err}", file=sys.stderr)
+              sys.exit(1)
+
+          print("All tool folders (README.md + LICENSE) and relative Markdown links are valid!")
+          EOF
