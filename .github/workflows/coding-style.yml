@@ -1,12 +1,8 @@
-name: Zephyr Coding Style Check
+name: Coding Style Check
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -19,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # -----------------------------------------------------------------------
       # 1. C / C++ Coding Style (Zephyr .clang-format)
@@ -54,7 +50,7 @@ jobs:
       # 2. Python Coding Style (Zephyr PEP 8 / 100 chars line length)
       # -----------------------------------------------------------------------
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
