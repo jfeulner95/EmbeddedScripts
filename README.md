@@ -1,4 +1,4 @@
-# EmbeddedScripts
+# <img src="./.github/assets/icon.jpg" alt="EmbeddedScripts Logo" width="42" align="center" /> EmbeddedScripts
 
 **License:** PolyForm Noncommercial 1.0.0
 
