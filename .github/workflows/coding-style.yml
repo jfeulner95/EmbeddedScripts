@@ -1,12 +1,8 @@
-name: Zephyr Coding Style Check
+name: Coding Style Check
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -14,17 +10,17 @@ permissions:
 
 jobs:
   coding-style:
-    name: Coding Style (Zephyr Guidelines)
+    name: Coding Style
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # -----------------------------------------------------------------------
-      # 1. C / C++ Coding Style (Zephyr .clang-format)
+      # 1. C / C++ Coding Style
       # -----------------------------------------------------------------------
-      - name: Check C/C++ files with clang-format (Zephyr style)
+      - name: Check C/C++ files with clang-format
         shell: bash
         run: |
           mapfile -t c_files < <(git ls-files '*.c' '*.h' '*.cpp' '*.hpp')
@@ -54,7 +50,7 @@ jobs:
       # 2. Python Coding Style (Zephyr PEP 8 / 100 chars line length)
       # -----------------------------------------------------------------------
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
