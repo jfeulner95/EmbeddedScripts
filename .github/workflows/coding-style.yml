@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   coding-style:
-    name: Coding Style (Zephyr Guidelines)
+    name: Coding Style
     runs-on: ubuntu-latest
 
     steps:
@@ -18,9 +18,9 @@ jobs:
         uses: actions/checkout@v6
 
       # -----------------------------------------------------------------------
-      # 1. C / C++ Coding Style (Zephyr .clang-format)
+      # 1. C / C++ Coding Style
       # -----------------------------------------------------------------------
-      - name: Check C/C++ files with clang-format (Zephyr style)
+      - name: Check C/C++ files with clang-format
         shell: bash
         run: |
           mapfile -t c_files < <(git ls-files '*.c' '*.h' '*.cpp' '*.hpp')
