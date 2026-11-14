@@ -18,6 +18,7 @@
 - [ ] Test automation / HIL runner
 - [ ] Breaking change (CLI arguments, config format, or output format changed)
 - [ ] Refactor / Dependency update / Documentation
+- [ ] CI/CD workflow / GitHub Actions
 
 ## Environment & Compatibility
 

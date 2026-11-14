@@ -9,7 +9,6 @@ Note: Interactive setup script to automatically install a chosen
       Zephyr RTOS release, workspace, dependencies, and the matching Zephyr SDK.
 """
 
-import os
 import sys
 import platform
 import subprocess
@@ -184,7 +183,10 @@ def main():
     else:
         if os_type == "Linux":
             sdk_archive_name = f"zephyr-sdk-{sdk_version}_linux-{sdk_arch}.tar.xz"
-            sdk_url = f"https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v{sdk_version}/{sdk_archive_name}"
+            sdk_url = (
+                "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/"
+                f"v{sdk_version}/{sdk_archive_name}"
+            )
             archive_path = base_dir / sdk_archive_name
 
             download_file(sdk_url, archive_path)
@@ -199,7 +201,10 @@ def main():
 
         elif os_type == "Windows":
             sdk_archive_name = f"zephyr-sdk-{sdk_version}_windows-{sdk_arch}.7z"
-            sdk_url = f"https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v{sdk_version}/{sdk_archive_name}"
+            sdk_url = (
+                "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/"
+                f"v{sdk_version}/{sdk_archive_name}"
+            )
             archive_path = base_dir / sdk_archive_name
 
             download_file(sdk_url, archive_path)
@@ -207,7 +212,10 @@ def main():
             print(f"Extracting SDK to {sdk_install_dir} (this may take a moment)...")
             seven_zip = shutil.which("7z") or r"C:\Program Files\7-Zip\7z.exe"
             if not Path(seven_zip).exists():
-                print("Error: 7-Zip not found. Please restart your terminal or install 7-Zip manually.")
+                print(
+                    "Error: 7-Zip not found. Please restart your terminal "
+                    "or install 7-Zip manually."
+                )
                 sys.exit(1)
 
             run_command([seven_zip, "x", str(archive_path), f"-o{sdk_install_dir}", "-y"])

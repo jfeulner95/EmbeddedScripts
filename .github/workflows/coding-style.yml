@@ -1,0 +1,87 @@
+name: Zephyr Coding Style Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coding-style:
+    name: Coding Style (Zephyr Guidelines)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 1. C / C++ Coding Style (Zephyr .clang-format)
+      # -----------------------------------------------------------------------
+      - name: Check C/C++ files with clang-format (Zephyr style)
+        shell: bash
+        run: |
+          mapfile -t c_files < <(git ls-files '*.c' '*.h' '*.cpp' '*.hpp')
+          if [ "${#c_files[@]}" -eq 0 ]; then
+            echo "No C/C++ files found — skipping clang-format check."
+            exit 0
+          fi
+
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clang-format
+
+          # Use repository .clang-format if present, otherwise fetch official Zephyr .clang-format
+          if [ ! -f ".clang-format" ]; then
+            echo "Fetching official Zephyr .clang-format configuration..."
+            curl -fsSL https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/main/.clang-format -o .clang-format
+            CLEANUP_CLANG_FORMAT=1
+          fi
+
+          echo "Checking ${#c_files[@]} C/C++ file(s)..."
+          clang-format --dry-run --Werror "${c_files[@]}"
+
+          if [ "${CLEANUP_CLANG_FORMAT:-0}" -eq 1 ]; then
+            rm -f .clang-format
+          fi
+
+      # -----------------------------------------------------------------------
+      # 2. Python Coding Style (Zephyr PEP 8 / 100 chars line length)
+      # -----------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Python files with Ruff (Zephyr PEP 8 style)
+        shell: bash
+        run: |
+          mapfile -t py_files < <(git ls-files '*.py')
+          if [ "${#py_files[@]}" -eq 0 ]; then
+            echo "No Python files found — skipping Python style check."
+            exit 0
+          fi
+
+          python -m pip install --upgrade pip ruff
+          echo "Checking ${#py_files[@]} Python file(s) (PEP 8, max line length: 100)..."
+          ruff check --select E,F,W --line-length 100 "${py_files[@]}"
+
+      # -----------------------------------------------------------------------
+      # 3. Shell Script Style (ShellCheck, used by Zephyr CI)
+      # -----------------------------------------------------------------------
+      - name: Check Shell scripts with ShellCheck
+        shell: bash
+        run: |
+          mapfile -t sh_files < <(git ls-files '*.sh')
+          if [ "${#sh_files[@]}" -eq 0 ]; then
+            echo "No Shell scripts found — skipping ShellCheck."
+            exit 0
+          fi
+
+          echo "Checking ${#sh_files[@]} Shell script(s)..."
+          shellcheck --severity=warning "${sh_files[@]}"
